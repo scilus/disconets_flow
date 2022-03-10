@@ -93,7 +93,7 @@ if (params.atlas){
                           size: 4,
                           maxDepth: 0,
                           flat: true) {it.parent.name}
-      .into{atlas_for_combine; atlas_for_registration; check_atlas}
+      .into{atlas_for_combine; atlas_for_registration; atlas_for_copy; check_atlas}
 
 }
 
@@ -144,6 +144,22 @@ process README {
     """
 }
 
+process Copy_Atlas {
+    cpus 1
+    publishDir = {"${params.output_dir}/"}
+    tag = "Atlas"
+
+    input:
+    set atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_copy
+
+    output:
+    file("${atlas_name}_atlas.nii.gz")
+
+    script:
+    """
+    mv ${atlas} ${atlas_name}_atlas.nii.gz
+    """
+}
 
 process Register_T1 {
     cpus params.processes_bet_register_t1
@@ -191,8 +207,7 @@ lesions_for_registration
     .join(transformation_for_registration_lesions)
     .set{lesion_mat_for_transformation}
 
-
-process Transform_Lesions {
+process Register_Lesions {
     cpus 1
 
     input:
@@ -208,7 +223,6 @@ process Transform_Lesions {
     scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz ${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz --data_type int16
     """
 }
-
 
 process Decompose_Connectivity {
     cpus 1
@@ -290,7 +304,6 @@ process Compute_Connectivity_Lesion_without_similiarity {
     """
 }
 
-
 process Connectivity_in_csv {
     cpus 1
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity"}
@@ -324,7 +337,6 @@ process Connectivity_in_csv {
     """
 }
 
-
 process Visualize_Connectivity {
     cpus 1
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity/Connectivity_w_lesion"}
@@ -339,8 +351,8 @@ process Visualize_Connectivity {
     String matrices_list = matrices.join(", ").replace(',', '')
     """
     for matrix in "$matrices_list"; do
-        scil_visualize_connectivity.py \$matrix \${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
-            --display_legend --lookup_table $atlas_labels --histogram \${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
+        scil_visualize_connectivity.py \$matrix ${sid}_\${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
+            --display_legend --lookup_table $atlas_labels --histogram ${sid}_\${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
     done
     """
 }
