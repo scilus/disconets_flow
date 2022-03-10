@@ -1,0 +1,64 @@
+Disconnect pipeline
+===================
+
+Run Disconnect pipeline
+
+USAGE
+
+nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
+
+You need to provide an atlas as well as tractograms in the same space in order to build your atlas decomposition database.
+If T1s are provided it will registered the lesion into the atlas
+
+
+DESCRIPTION
+
+    --input=/path/to/[root]            Root folder containing multiple subjects
+                                       If t1 is provided we will register the lesion(s) into atlas.
+                                       [root]
+                                       ├── S1
+                                       │   │── *t1.nii.gz (optional)
+                                       |   │── *lesion_01_mask.nii.gz
+                                       |   └── *lesion_02_mask.nii.gz
+                                       └── S2
+                                           │── *t1.nii.gz (optional)
+                                           │── *lesion_01_mask.nii.gz
+                                           └── *lesion_02_mask.nii.gz
+
+    --atlas                            Absolute path to the atlases folder
+                                       [atlas_name] (Should be the name of the atlas used)
+                                       │── atlas_labels.nii.gz (NIFTI image with all labels)
+                                       │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
+                                       │── atlas_list.txt
+                                       └── atlas_t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
+
+
+    --tractograms                      Absolute path to the tractograms
+                                       [tractograms]
+                                       ├── sub-01 (can use a different name)
+                                       |   └── *.trk (can be multiple trk)
+                                       └── sub-02 (can use a different name)
+                                           └── *.trk (can be multiple trk)
+
+OPTIONAL ARGUMENTS (current value)
+
+    --output_dir                        Directory where to write the final results.
+                                        By default, will be in "./results_disconnectflow"
+
+    --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
+
+    --slow_registration                 If set, will choose antsRegistrationSyN.sh instead of antsRegistrationSyNQuick.sh ($slow_registration).
+    --linear_registration               If set, will choose linear registration of the lesion into the atlas space instead of non-linear registration ($linear_registration).
+
+    --no_pruning                        If set, will NOT prune on length ($no_pruning)
+    --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops)
+    --no_remove_outliers                If set, will NOT remove outliers using QB ($no_remove_outliers)
+    --min_length                        Pruning minimal segment length ($min_length)
+    --max_length                        Pruning maximal segment length ($max_length)
+    --loop_max_angle                    Maximal winding angle over which a streamline is considered as looping ($loop_max_angle)
+    --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold)
+
+
+    --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity)
+    --processes                         The number of parallel processes to launch ($cpu_count).
+                                        Only affects the local scheduler.
