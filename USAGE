@@ -1,14 +1,14 @@
-Disconnect pipeline
-===================
+Disconects_flow pipeline
+========================
 
-Run Disconnect pipeline
+Run disconects_flow pipeline
 
 USAGE
 
 nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
 
 You need to provide an atlas as well as tractograms in the same space in order to build your atlas decomposition database.
-If T1s are provided it will registered the lesion into the atlas
+If T1s are provided it will registered the lesion into the atlas space.
 
 
 DESCRIPTION
@@ -25,7 +25,7 @@ DESCRIPTION
                                            │── *lesion_01_mask.nii.gz
                                            └── *lesion_02_mask.nii.gz
 
-    --atlas                            Absolute path to the atlases folder
+    --atlas=/path/to/[atlas_name]            Absolute path to the atlases folder
                                        [atlas_name] (Should be the name of the atlas used)
                                        │── atlas_labels.nii.gz (NIFTI image with all labels)
                                        │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
@@ -33,17 +33,17 @@ DESCRIPTION
                                        └── atlas_t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
 
 
-    --tractograms                      Absolute path to the tractograms
-                                       [tractograms]
-                                       ├── sub-01 (can use a different name)
-                                       |   └── *.trk (can be multiple trk)
-                                       └── sub-02 (can use a different name)
-                                           └── *.trk (can be multiple trk)
+    --tractograms=/path/to/[tractograms]  Absolute path to the tractograms
+                                          [tractograms]
+                                          ├── sub-01 (can use a different name)
+                                          |   └── *.trk (can be multiple trk)
+                                          └── sub-02 (can use a different name)
+                                              └── *.trk (can be multiple trk)
 
 OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
-                                        By default, will be in "./results_disconnectflow"
+                                        By default, will be in "./results_disconects_flow"
 
     --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
 

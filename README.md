@@ -1,37 +1,32 @@
-Disconnectoflow:
+# Disconects_flow
 
-Here are some [data](https://drive.google.com/file/d/1VX1dUgGBYr6JJ8_osHGmnsVqO_CJVl7y/view?usp=sharing)
+Disconects_flow allows you to know the impact of a cavity on structural connectivity matrices.
 
-Example command line (Build filtered tractograms really long):
+Yeo atlas used in the paper [link](https://box.criugm.qc.ca/f/65e07378c3374453ae9c/?dl=1)
+
+Subset of tractograms [link](https://box.criugm.qc.ca/f/034b74d2c9844da38951/?dl=1)
+
+### Command line:
 ```
-nextflow run disconnectome.nf \
-        --root dataset/ \
-        --atlasFolder [FullPathTo]/atlas/ \
+nextflow run main.nf \
+        --input [FullPathTo]data/ \
+        --atlas [FullPathTo]/atlas/ \
         --tractograms [FullPathTo]/tractograms/ \
-        -with-singularity scilpy-1.0.0-rc1.sif \
+        -with-singularity scilus-1.0.0-rc1.sif \
         resume
 ```
 
-or
 
+### Disconects input structure
 ```
-nextflow run disconnectome.nf \
-        --root dataset/ \
-        --filteredTractograms [FullPathTo]/filtered_tractograms/ \
-        --atlasFolder [FullPathTo]/atlas/ \
-        --output_dir [FullPathTo]/output/ \
-        -with-singularity scilpy-1.0.0-rc1.sif \
-        --resume
-```
+Input
+├── sub-01
+│   ├── cavity.nii.gz
+└── sub-02
+    └── cavity.nii.gz
+ ```
 
-
-```
-disconects_dataset
-.
-├── sub-ROUSSEAU
-│   ├── cavity_ROUSSEAU_ANTS.nii.gz
-│   └── cavity_ROUSSEAU_FSL.nii.gz
-└── sub-ROUSSELIE
-    ├── cavity_ROUSSELIE_ANTS.nii.gz
-    └── cavity_ROUSSELIE_FSL.nii.gz
+ Please cite:
+ ```
+ Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E. Network-level prediction of set-shifting deterioration after lower-grade glioma resection. J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print. PMID: 35245898.
  ```
