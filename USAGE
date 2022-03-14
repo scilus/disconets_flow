@@ -17,15 +17,13 @@ DESCRIPTION
                                        If t1 is provided we will register the lesion(s) into atlas.
                                        [root]
                                        ├── S1
-                                       │   │── *t1.nii.gz (optional)
-                                       |   │── *lesion_01_mask.nii.gz
-                                       |   └── *lesion_02_mask.nii.gz
+                                       │   │── t1.nii.gz (optional)
+                                       |   └── cavity.nii.gz
                                        └── S2
-                                           │── *t1.nii.gz (optional)
-                                           │── *lesion_01_mask.nii.gz
-                                           └── *lesion_02_mask.nii.gz
+                                           │── t1.nii.gz (optional)
+                                           └── cavity.nii.gz
 
-    --atlas=/path/to/[atlas_name]            Absolute path to the atlases folder
+    --atlas=/path/to/[atlas_name]      Absolute path to the atlases folder
                                        [atlas_name] (Should be the name of the atlas used)
                                        │── atlas_labels.nii.gz (NIFTI image with all labels)
                                        │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
@@ -36,10 +34,9 @@ DESCRIPTION
     --tractograms=/path/to/[tractograms]  Absolute path to the tractograms
                                           [tractograms]
                                           ├── sub-01 (can use a different name)
-                                          |   └── *.trk (can be multiple trk)
+                                          |   └── *.trk (One file)
                                           └── sub-02 (can use a different name)
-                                              └── *.trk (can be multiple trk)
-
+                                              └── *.trk (One file)
 OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
