@@ -66,15 +66,17 @@ workflow.onComplete {
 
 if (params.input){
     root = file(params.input)
-    Channel.fromPath("$root/**/cavity.nii.gz",
-                     maxDepth:1)
-          .map{[it.parent.name, it]}
+    Channel.fromFilePairs("$root/**/cavity.nii.gz",
+                     size: 1,
+                     maxDepth: 1,
+                     flat: true) {it.parent.name}
           .into{lesions; lesions_for_registration; check_lesions}
 
 
-    Channel.fromPath("$root/**/*t1.nii.gz",
-                     maxDepth:1)
-          .map{[it.parent.name, it]}
+    Channel.fromFilePairs("$root/**/t1.nii.gz",
+                          size: 1,
+                          maxDepth: 1,
+                          flat: true) {it.parent.name}
           .into{t1s_for_register; check_t1s}
 }
 
@@ -150,23 +152,28 @@ process Copy_Atlas {
     tag = "Atlas"
 
     input:
-    set atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_copy
+    set atlas_name, file(atlas_labels), file(atlas_labels_txt), file(atlas_list), file(atlas_t1) from atlas_for_copy
 
     output:
-    file("${atlas_name}_atlas.nii.gz")
+    file("${atlas_name}_labels.nii.gz")
+    file("${atlas_name}_labels.txt")
+    file("${atlas_name}_t1.nii.gz")
 
     script:
     """
-    mv ${atlas} ${atlas_name}_atlas.nii.gz
+    mv ${atlas_labels} ${atlas_name}_labels.nii.gz
+    mv ${atlas_labels_txt} ${atlas_name}_labels.txt
+    mv ${atlas_t1} ${atlas_name}_t1.nii.gz
     """
 }
+
+t1s_for_register.combine(atlas_for_registration).set{atlas_for_registration}
 
 process Register_T1 {
     cpus params.processes_bet_register_t1
 
     input:
-    set sid, file(t1) from t1s_for_register
-    set atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_registration
+    set sid, file(t1), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_registration
 
     output:
     set sid, atlas_name, "${sid}__output0GenericAffine.mat", "${sid}__t1_${atlas_name}_space.nii.gz" into transformation_for_registration_lesions
@@ -284,22 +291,26 @@ process Compute_Connectivity_Lesion_without_similiarity {
 
     output:
     set sid, lesion_id, "*.npy", "Connectivity_w_lesion/*.npy" into matrices_for_connectivity_in_csv
-    set sid, lesion_id, "$atlas_labels", "$atlas_list", "Connectivity_w_lesion/lesion_sc.npy" into lesion_sc_for_visualisation
+    set sid, lesion_id, "$atlas_labels", "$atlas_list", "Connectivity_w_lesion/${lesion_id}_${sid}_lesion_sc.npy" into lesion_sc_for_visualisation
 
     script:
     """
     mkdir Connectivity_w_lesion
 
     scil_compute_connectivity.py $h5 $atlas --force_labels_list $atlas_list \
-        --volume atlas_vol.npy --streamline_count atlas_sc.npy \
-        --length atlas_len.npy \
+        --volume ${lesion_id}_${sid}_atlas_vol.npy --streamline_count ${lesion_id}_${sid}_atlas_sc.npy \
+        --length ${lesion_id}_${sid}_atlas_len.npy \
         --include_dps ./ --lesion_load $lesion Connectivity_w_lesion/ \
         --processes $params.processes_connectivity
 
+    mv Connectivity_w_lesion/lesion_sc.npy Connectivity_w_lesion/${lesion_id}_${sid}_lesion_sc.npy
+    mv Connectivity_w_lesion/lesion_vol.npy Connectivity_w_lesion/${lesion_id}_${sid}_lesion_vol.npy
+    mv Connectivity_w_lesion/lesion_count.npy Connectivity_w_lesion/${lesion_id}_${sid}_lesion_count.npy
+
     rm rd_fixel.npy -f
-    scil_normalize_connectivity.py atlas_sc.npy atlas_sc_edge_normalized.npy \
+    scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_edge_normalized.npy \
         --parcel_volume $atlas $atlas_list
-    scil_normalize_connectivity.py atlas_vol.npy atlas_sc_vol_normalized.npy \
+    scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_vol.npy ${lesion_id}_${sid}_atlas_sc_vol_normalized.npy \
         --parcel_volume $atlas $atlas_list
     """
 }
@@ -351,8 +362,8 @@ process Visualize_Connectivity {
     String matrices_list = matrices.join(", ").replace(',', '')
     """
     for matrix in "$matrices_list"; do
-        scil_visualize_connectivity.py \$matrix ${sid}_\${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
-            --display_legend --lookup_table $atlas_labels --histogram ${sid}_\${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
+        scil_visualize_connectivity.py \$matrix \${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
+            --display_legend --lookup_table $atlas_labels --log --histogram \${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
     done
     """
 }
