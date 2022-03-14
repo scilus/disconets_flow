@@ -1,18 +1,38 @@
 # Disconects_flow
 
-Disconects_flow allows you to know the impact of a cavity on structural connectivity matrices.
+Disconects_flow allows you to analyse the impact of a cavity on structural connectivity matrices.
 
 Yeo atlas used in the paper [link](https://box.criugm.qc.ca/f/65e07378c3374453ae9c/?dl=1)
 
 Subset of tractograms [link](https://box.criugm.qc.ca/f/034b74d2c9844da38951/?dl=1)
 
-### Command line:
+
+
+### Build singularity or docker image
 ```
+# Singularity
+sudo singularity build scilus_latest.sif docker://scilus/scilus:latest
+
+# Docker
+sudo docker pull scilus/scilus:latest
+```
+
+## Run Disconects_flow
+```
+# With singularity image
 nextflow run main.nf \
         --input [FullPathTo]data/ \
         --atlas [FullPathTo]/atlas/ \
         --tractograms [FullPathTo]/tractograms/ \
-        -with-singularity scilus-1.0.0-rc1.sif \
+        -with-singularity scilus_latest.sif \
+        resume
+
+# With docker image
+nextflow run main.nf \
+        --input [FullPathTo]data/ \
+        --atlas [FullPathTo]/atlas/ \
+        --tractograms [FullPathTo]/tractograms/ \
+        -with-docker scilus/scilus:latest \
         resume
 ```
 
