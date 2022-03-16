@@ -31,7 +31,7 @@ DESCRIPTION
                                        └── atlas_t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
 
 
-    --tractograms=/path/to/[tractograms]  Absolute path to the tractograms
+    --tractograms=/path/to/[tractograms]  Absolute path to the tractograms (Need to be in the atlas space)
                                           [tractograms]
                                           ├── sub-01 (can use a different name)
                                           |   └── *.trk (One file)

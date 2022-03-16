@@ -107,6 +107,11 @@ check_lesions_number
 .subscribe{a -> if (a == 0)
     error "Error ~ No subjects found. Please check the naming convention, your --input path."}
 
+check_atlas
+.count()
+.subscribe{a -> if (a == 0)
+    error "Error ~ No atlas found. Please check the naming convention, your --atlas path."}
+
 check_lesions_number_compare_t1
   .concat(check_t1s_number)
   .toList()
