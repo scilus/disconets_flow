@@ -30,7 +30,7 @@ if(params.help) {
     return
 }
 
-log.info "Disconects_flow pipeline"
+log.info "Disconets_flow pipeline"
 log.info "==================="
 log.info ""
 log.info "Start time: $workflow.start"
@@ -143,7 +143,7 @@ process README {
     }
 
     """
-    echo "Disconects_flow pipeline\n" >> readme.txt
+    echo "Disconets_flow pipeline\n" >> readme.txt
     echo "Start time: $workflow.start\n" >> readme.txt
     echo "[Command-line]\n$workflow.commandLine\n" >> readme.txt
     echo "[Options]\n" >> readme.txt

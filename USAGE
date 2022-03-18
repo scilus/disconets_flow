@@ -1,7 +1,7 @@
-Disconects_flow pipeline
+Disconets_flow pipeline
 ========================
 
-Run disconects_flow pipeline
+Run disconets_flow pipeline
 
 USAGE
 
@@ -40,7 +40,7 @@ DESCRIPTION
 OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
-                                        By default, will be in "./results_disconects_flow"
+                                        By default, will be in "./results_disconets_flow"
 
     --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
 
