@@ -1,0 +1,79 @@
+Disconets_flow pipeline
+========================
+
+Run disconets_flow pipeline
+
+USAGE
+
+nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
+
+You need to provide an atlas and tractograms from controls to build your atlas decomposition database.
+If T1s are provided (lesions and/or tractograms) it will registered the lesion/tractogram into the atlas space.
+Disconets_flow will use a non-linear registration for the tractograms but you can use linear or
+non-linear registration for the lesions.
+
+
+Please cite:
+Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E.
+Network-level prediction of set-shifting deterioration after lower-grade glioma resection.
+J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print. PMID: 35245898.
+
+
+
+DESCRIPTION
+
+    --input=/path/to/[root]            Root folder containing multiple subjects
+                                       If t1s are provided, it will register the lesion(s) into the atlas.
+                                       [root]
+                                       ├── S1
+                                       │   │── *t1.nii.gz (optional)
+                                       |   └── *cavity.nii.gz
+                                       └── S2
+                                           │── *t1.nii.gz (optional)
+                                           └── *cavity.nii.gz
+
+    --atlas=/path/to/[atlas_name]      Absolute path to the atlases folder
+                                       [atlas_name] (Should be the name of the atlas used)
+                                       │── atlas_labels.nii.gz (NIFTI image with all labels)
+                                       │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
+                                       │── atlas_list.txt
+                                       └── atlas_t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
+
+
+    --tractograms=/path/to/[tractograms]  Absolute path to the tractograms (Need to be in the atlas space)
+                                          If t1s are provided, it will register the tractograms into the atlas.
+                                          [tractograms]
+                                          ├── T01 (can use a different name)
+                                          │   │── *t1.nii.gz (optional)
+                                          |   └── *.trk (One file)
+                                          └── T02 (can use a different name)
+                                              │── *t1.nii.gz (optional)
+                                              └── *.trk (One file)
+OPTIONAL ARGUMENTS (current value)
+
+    --output_dir                        Directory where to write the final results.
+                                        By default, will be in "./results_disconets_flow".
+
+    --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
+
+    --quick_registration                If set, will choose antsRegistrationSyNQuick.sh instead of antsRegistrationSyN.sh ($quick_registration).
+    --linear_registration               If set, will choose linear registration of the lesion into the atlas space instead of non-linear registration ($linear_registration).
+
+    --no_pruning                        If set, will NOT prune on length ($no_pruning).
+    --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops).
+    --no_remove_outliers                If set, will NOT remove outliers using QB ($no_remove_outliers).
+    --min_length                        Pruning minimal segment length ($min_length).
+    --max_length                        Pruning maximal segment length ($max_length).
+    --loop_max_angle                    Maximal winding angle over which a streamline is considered as looping ($loop_max_angle).
+    --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold).
+
+
+    --processes_bet_register_t1         Number of processes for T1 brain extraction task ($processes_bet_register_t1).
+    --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity).
+    --processes                         The number of parallel processes to launch ($cpu_count).
+                                        Only affects the local scheduler.
+
+AVAILABLE PROFILES (using -profile option (e.g. -profile fully_reproducible))
+
+    macos                                       When this profile is used, Disconets_flow will modify a parameter (scratch) for MacOS users.
+    fully_reproducible                          When this profile is used, all the parameters will be set to have 100% reproducible results.
