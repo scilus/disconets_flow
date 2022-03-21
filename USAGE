@@ -7,8 +7,17 @@ USAGE
 
 nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
 
-You need to provide an atlas as well as tractograms in the same space in order to build your atlas decomposition database.
-If T1s are provided it will registered the lesion into the atlas space.
+You need to provide an atlas and tractograms from controls to build your atlas decomposition database.
+If T1s are provided (lesions and/or tractograms) it will registered the lesion/tractogram into the atlas space.
+Disconets_flow will use a non-linear registration for the tractograms but you can linear or
+non-linear registration for the lestions.
+
+
+Please cite:
+Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E.
+Network-level prediction of set-shifting deterioration after lower-grade glioma resection.
+J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print. PMID: 35245898.
+
 
 
 DESCRIPTION
@@ -17,11 +26,11 @@ DESCRIPTION
                                        If t1 is provided we will register the lesion(s) into atlas.
                                        [root]
                                        ├── S1
-                                       │   │── t1.nii.gz (optional)
-                                       |   └── cavity.nii.gz
+                                       │   │── *t1.nii.gz (optional)
+                                       |   └── *cavity.nii.gz
                                        └── S2
-                                           │── t1.nii.gz (optional)
-                                           └── cavity.nii.gz
+                                           │── *t1.nii.gz (optional)
+                                           └── *cavity.nii.gz
 
     --atlas=/path/to/[atlas_name]      Absolute path to the atlases folder
                                        [atlas_name] (Should be the name of the atlas used)
@@ -33,29 +42,31 @@ DESCRIPTION
 
     --tractograms=/path/to/[tractograms]  Absolute path to the tractograms (Need to be in the atlas space)
                                           [tractograms]
-                                          ├── sub-01 (can use a different name)
+                                          ├── T01 (can use a different name)
+                                          │   │── *t1.nii.gz (optional)
                                           |   └── *.trk (One file)
-                                          └── sub-02 (can use a different name)
+                                          └── T02 (can use a different name)
+                                              │── *t1.nii.gz (optional)
                                               └── *.trk (One file)
 OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
-                                        By default, will be in "./results_disconets_flow"
+                                        By default, will be in "./results_disconets_flow".
 
     --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
 
-    --slow_registration                 If set, will choose antsRegistrationSyN.sh instead of antsRegistrationSyNQuick.sh ($slow_registration).
+    --quick_registration                If set, will choose antsRegistrationSyNQuick.sh instead of antsRegistrationSyN.sh ($quick_registration).
     --linear_registration               If set, will choose linear registration of the lesion into the atlas space instead of non-linear registration ($linear_registration).
 
-    --no_pruning                        If set, will NOT prune on length ($no_pruning)
-    --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops)
-    --no_remove_outliers                If set, will NOT remove outliers using QB ($no_remove_outliers)
-    --min_length                        Pruning minimal segment length ($min_length)
-    --max_length                        Pruning maximal segment length ($max_length)
-    --loop_max_angle                    Maximal winding angle over which a streamline is considered as looping ($loop_max_angle)
-    --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold)
+    --no_pruning                        If set, will NOT prune on length ($no_pruning).
+    --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops).
+    --no_remove_outliers                If set, will NOT remove outliers using QB ($no_remove_outliers).
+    --min_length                        Pruning minimal segment length ($min_length).
+    --max_length                        Pruning maximal segment length ($max_length).
+    --loop_max_angle                    Maximal winding angle over which a streamline is considered as looping ($loop_max_angle).
+    --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold).
 
 
-    --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity)
+    --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity).
     --processes                         The number of parallel processes to launch ($cpu_count).
                                         Only affects the local scheduler.

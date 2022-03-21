@@ -8,7 +8,7 @@ if(params.help) {
 
     bindings = ["registration_script":"$params.registration_script",
                 "linear_registration": "$params.linear_registration",
-                "slow_registration": "$params.slow_registration",
+                "quick_registration": "$params.quick_registration",
                 "output_dir":"$params.output_dir",
                 "run_bet":"$params.run_bet",
                 "no_pruning":"$params.no_pruning",
@@ -66,14 +66,14 @@ workflow.onComplete {
 
 if (params.input){
     root = file(params.input)
-    Channel.fromFilePairs("$root/**/cavity.nii.gz",
+    Channel.fromFilePairs("$root/**/*${params.lesion_name}.nii.gz",
                      size: 1,
                      maxDepth: 1,
                      flat: true) {it.parent.name}
           .into{lesions; lesions_for_registration; check_lesions}
 
 
-    Channel.fromFilePairs("$root/**/t1.nii.gz",
+    Channel.fromFilePairs("$root/**/*t1.nii.gz",
                           size: 1,
                           maxDepth: 1,
                           flat: true) {it.parent.name}
@@ -82,11 +82,17 @@ if (params.input){
 
 if (params.tractograms){
     tractograms = file(params.tractograms)
-    Channel.fromFilePairs("$tractograms/**/*trk",
+    Channel.fromFilePairs("$tractograms/**/*.trk",
                           size: 1,
                           maxDepth: 1,
                           flat: true) {it.parent.name}
-          .into{tractograms_for_combine; check_trks}
+          .into{trks_for_combine; check_trks; trks_for_transformation}
+
+    Channel.fromFilePairs("$tractograms/**/*t1.nii.gz",
+                          size: 1,
+                          maxDepth: 1,
+                          flat: true) {it.parent.name}
+            .into{trks_t1s_for_register; check_trks_t1s}
 }
 
 if (params.atlas){
@@ -95,13 +101,14 @@ if (params.atlas){
                           size: 4,
                           maxDepth: 0,
                           flat: true) {it.parent.name}
-      .into{atlas_for_combine; atlas_for_registration; atlas_for_copy; check_atlas}
-
+      .into{atlas_for_combine; atlas_for_trk_registration; atlas_for_lesion_registration; atlas_for_copy; check_atlas}
 }
 
 // Check Lesions
 check_lesions.count().into{check_lesions_number; check_lesions_number_compare_t1}
-check_t1s.count().into{check_t1s_number; check_t1s_number_for_registration; tt}
+check_t1s.count().into{check_t1s_number; check_t1s_number_for_registration}
+check_trks_t1s.count().into{check_trks_t1s_numbers; check_trks_t1s_for_compare; trks_t1s_empty; check_trks_t1s_for_registration}
+check_trks.count().into{check_trks_numbers; check_trks_for_compare}
 
 check_lesions_number
 .subscribe{a -> if (a == 0)
@@ -120,13 +127,17 @@ check_lesions_number_compare_t1
         "Please be sure to have the same acquisitions for all subjects."}
 
 // Check TRKs
-check_trks
+check_trks_numbers
 .subscribe{a -> if (a == 0)
     error "Error ~ No tractograms found. Please check the naming convention, your --tractograms path."
 }
 
-tractograms_for_combine.combine(atlas_for_combine)
-    .set{trk_atlases_for_decompose_connectivity}
+check_trks_for_compare
+  .concat(check_trks_t1s_for_compare)
+  .toList()
+  .subscribe{a, b -> if (a != b && b > 0)
+  error "Error ~ Some tractograms have a T1w and others don't.\n" +
+        "Please be sure to have the same acquisitions for all tractograms."}
 
 process README {
     cpus 1
@@ -154,31 +165,30 @@ process README {
 process Copy_Atlas {
     cpus 1
     publishDir = {"${params.output_dir}/"}
-    tag = "Atlas"
 
     input:
-    set atlas_name, file(atlas_labels), file(atlas_labels_txt), file(atlas_list), file(atlas_t1) from atlas_for_copy
+    set sid, file(atlas_labels), file(atlas_labels_txt), file(atlas_list), file(atlas_t1) from atlas_for_copy
 
     output:
-    file("${atlas_name}_labels.nii.gz")
-    file("${atlas_name}_labels.txt")
-    file("${atlas_name}_t1.nii.gz")
+    file("${sid}_labels.nii.gz")
+    file("${sid}_labels.txt")
+    file("${sid}_t1.nii.gz")
 
     script:
     """
-    mv ${atlas_labels} ${atlas_name}_labels.nii.gz
-    mv ${atlas_labels_txt} ${atlas_name}_labels.txt
-    mv ${atlas_t1} ${atlas_name}_t1.nii.gz
+    mv ${atlas_labels} ${sid}_labels.nii.gz
+    mv ${atlas_labels_txt} ${sid}_labels.txt
+    mv ${atlas_t1} ${sid}_t1.nii.gz
     """
 }
 
-t1s_for_register.combine(atlas_for_registration).set{atlas_for_registration}
+t1s_for_register.combine(atlas_for_lesion_registration).set{atlas_lesion_for_registration}
 
-process Register_T1 {
+process Register_Lesions_T1s {
     cpus params.processes_bet_register_t1
 
     input:
-    set sid, file(t1), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_registration
+    set sid, file(t1), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_lesion_for_registration
 
     output:
     set sid, atlas_name, "${sid}__output0GenericAffine.mat", "${sid}__t1_${atlas_name}_space.nii.gz" into transformation_for_registration_lesions
@@ -219,7 +229,7 @@ lesions_for_registration
     .join(transformation_for_registration_lesions)
     .set{lesion_mat_for_transformation}
 
-process Register_Lesions {
+process Transform_Lesions {
     cpus 1
 
     input:
@@ -235,6 +245,78 @@ process Register_Lesions {
     scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz ${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz --data_type int16
     """
 }
+
+trks_t1s_for_register.combine(atlas_for_trk_registration).set{atlas_trk_for_registration}
+
+process Register_Tractograms_T1s {
+    cpus params.processes_bet_register_t1
+
+    input:
+    set sid, file(t1), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_trk_for_registration
+
+    output:
+    set sid, atlas_name, "${sid}__t1_${atlas_name}_space.nii.gz", "${sid}__output0GenericAffine.mat", "${sid}__output1InverseWarp.nii.gz" into transformation_for_trk_registration
+    file "${sid}__output1Warp.nii.gz"
+    file "${sid}__t1_bet_mask.nii.gz" optional true
+    file "${sid}__t1_bet.nii.gz" optional true
+
+    script:
+    if (params.run_bet){
+    """
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export OMP_NUM_THREADS=1
+        export OPENBLAS_NUM_THREADS=1
+        export ANTS_RANDOM_SEED=1234
+
+        antsBrainExtraction.sh -d 3 -a $t1 -e $params.template_t1/t1_template.nii.gz\
+            -o bet/ -m $params.template_t1/t1_brain_probability_map.nii.gz -u 0
+        scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
+        scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
+
+        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t s
+        mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
+    """
+    }
+    else{
+    """
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export OMP_NUM_THREADS=1
+        export OPENBLAS_NUM_THREADS=1
+        export ANTS_RANDOM_SEED=1234
+
+        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t s
+        mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
+    """
+    }
+}
+
+transformation_for_trk_registration
+    .cross(trks_for_transformation)
+    .map { [ it[0][0], it[1][1], it[0][1], it[0][2], it[0][3], it[0][4]] }
+    .set{transfo_trk_for_registration}
+
+process Transform_Tractograms {
+    cpus 1
+
+    input:
+    set sid, file(trk), atlas_name, file(atlas), file(transfo), file(inv_deformation) from transfo_trk_for_registration
+
+    output:
+    set sid, "${sid}_${atlas_name}_space.trk" into transformed_trks
+
+    script:
+    """
+    scil_apply_transform_to_tractogram.py ${trk} ${atlas} ${transfo} ${sid}_${atlas_name}_space.trk --remove_invalid --inverse --in_deformation ${inv_deformation}
+    """
+}
+
+if (trks_t1s_empty.get()==0){
+  trks_for_combine.combine(atlas_for_combine).set{trk_atlases_for_decompose_connectivity}
+}
+else{
+  transformed_trks.combine(atlas_for_combine).set{trk_atlases_for_decompose_connectivity}
+}
+
 
 process Decompose_Connectivity {
     cpus 1
