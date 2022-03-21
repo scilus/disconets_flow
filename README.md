@@ -12,7 +12,7 @@ Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E. Netwo
 ### Build singularity or docker image
 ```
 # Singularity
-sudo singularity build scilus_latest.sif docker://scilus/scilus:1.3.0
+sudo singularity build scilus_1.3.0.sif docker://scilus/scilus:1.3.0
 
 # Docker
 sudo docker pull scilus/scilus:1.3.0
@@ -25,7 +25,7 @@ nextflow run main.nf \
         --input [FullPathToLesions]/ \
         --atlas [FullPathToAtlas]/ \
         --tractograms [FullPathToTractograms]/ \
-        -with-singularity scilus_latest.sif \
+        -with-singularity scilus_1.3.0.sif \
         resume
 
 # With docker image
