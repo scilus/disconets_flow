@@ -12,10 +12,10 @@ Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E. Netwo
 ### Build singularity or docker image
 ```
 # Singularity
-sudo singularity build scilus_latest.sif docker://scilus/scilus:latest
+sudo singularity build scilus_latest.sif docker://scilus/scilus:1.3.0
 
 # Docker
-sudo docker pull scilus/scilus:latest
+sudo docker pull scilus/scilus:1.3.0
 ```
 
 ## Run Disconets_flow
