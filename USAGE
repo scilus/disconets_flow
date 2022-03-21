@@ -9,8 +9,8 @@ nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
 
 You need to provide an atlas and tractograms from controls to build your atlas decomposition database.
 If T1s are provided (lesions and/or tractograms) it will registered the lesion/tractogram into the atlas space.
-Disconets_flow will use a non-linear registration for the tractograms but you can linear or
-non-linear registration for the lestions.
+Disconets_flow will use a non-linear registration for the tractograms but you can use linear or
+non-linear registration for the lesions.
 
 
 Please cite:
@@ -23,7 +23,7 @@ J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print.
 DESCRIPTION
 
     --input=/path/to/[root]            Root folder containing multiple subjects
-                                       If t1 is provided we will register the lesion(s) into atlas.
+                                       If t1s are provided, it will register the lesion(s) into the atlas.
                                        [root]
                                        ├── S1
                                        │   │── *t1.nii.gz (optional)
@@ -41,6 +41,7 @@ DESCRIPTION
 
 
     --tractograms=/path/to/[tractograms]  Absolute path to the tractograms (Need to be in the atlas space)
+                                          If t1s are provided, it will register the tractograms into the atlas.
                                           [tractograms]
                                           ├── T01 (can use a different name)
                                           │   │── *t1.nii.gz (optional)
@@ -67,6 +68,12 @@ OPTIONAL ARGUMENTS (current value)
     --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold).
 
 
+    --processes_bet_register_t1         Number of processes for T1 brain extraction task ($processes_bet_register_t1).
     --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity).
     --processes                         The number of parallel processes to launch ($cpu_count).
                                         Only affects the local scheduler.
+
+AVAILABLE PROFILES (using -profile option (e.g. -profile fully_reproducible))
+
+    macos                                       When this profile is used, Disconets_flow will modify a parameter (scratch) for MacOS users.
+    fully_reproducible                          When this profile is used, all the parameters will be set to have 100% reproducible results.

@@ -19,7 +19,7 @@ if(params.help) {
                 "loop_max_angle":"$params.loop_max_angle",
                 "outlier_threshold":"$params.outlier_threshold",
                 "nbr_subjects_for_avg_connections":"$params.nbr_subjects_for_avg_connections",
-                "processes_register":"$params.processes_register",
+                "processes_bet_register_t1":"$params.processes_bet_register_t1",
                 "processes_connectivity":"$params.processes_connectivity",
                 "cpu_count":"$cpu_count"]
 
@@ -198,7 +198,7 @@ process Register_Lesions_T1s {
     script:
     if (params.run_bet){
     """
-        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${params.processes_bet_register_t1}
         export OMP_NUM_THREADS=1
         export OPENBLAS_NUM_THREADS=1
         export ANTS_RANDOM_SEED=1234
@@ -208,18 +208,18 @@ process Register_Lesions_T1s {
         scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
         scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
 
-        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t ${params.registration_strategy}
+        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" -t ${params.registration_strategy}
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
     else{
     """
-        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${params.processes_bet_register_t1}
         export OMP_NUM_THREADS=1
         export OPENBLAS_NUM_THREADS=1
         export ANTS_RANDOM_SEED=1234
 
-        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" ${params.registration_strategy}
+        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" ${params.registration_strategy}
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
@@ -263,7 +263,7 @@ process Register_Tractograms_T1s {
     script:
     if (params.run_bet){
     """
-        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${params.processes_bet_register_t1}
         export OMP_NUM_THREADS=1
         export OPENBLAS_NUM_THREADS=1
         export ANTS_RANDOM_SEED=1234
@@ -273,18 +273,18 @@ process Register_Tractograms_T1s {
         scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
         scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
 
-        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t s
+        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" -t s
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
     else{
     """
-        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$task.cpus
+        export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${params.processes_bet_register_t1}
         export OMP_NUM_THREADS=1
         export OPENBLAS_NUM_THREADS=1
         export ANTS_RANDOM_SEED=1234
 
-        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t s
+        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" -t s
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
