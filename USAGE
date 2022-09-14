@@ -22,9 +22,9 @@ J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print.
 
 DESCRIPTION
 
-    --input=/path/to/[root]            Root folder containing multiple subjects
+    --input=/path/to/[input]           Input folder containing multiple subjects
                                        If t1s are provided, it will register the lesion(s) into the atlas.
-                                       [root]
+                                       [input]
                                        ├── S1
                                        │   │── *t1.nii.gz (optional)
                                        |   └── *cavity.nii.gz
@@ -32,8 +32,8 @@ DESCRIPTION
                                            │── *t1.nii.gz (optional)
                                            └── *cavity.nii.gz
 
-    --atlas=/path/to/[atlas_name]      Absolute path to the atlases folder
-                                       [atlas_name] (Should be the name of the atlas used)
+    --atlas=/path/to/[atlas]           Absolute path to the atlases folder
+                                       [atlas] (Should be the name of the atlas used)
                                        │── atlas_labels.nii.gz (NIFTI image with all labels)
                                        │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
                                        │── atlas_list.txt
