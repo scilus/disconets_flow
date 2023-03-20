@@ -20,6 +20,7 @@ if(params.help) {
                 "outlier_threshold":"$params.outlier_threshold",
                 "nbr_subjects_for_avg_connections":"$params.nbr_subjects_for_avg_connections",
                 "processes_bet_register_t1":"$params.processes_bet_register_t1",
+                "processes_decompose":"$params.processes_decompose",
                 "processes_connectivity":"$params.processes_connectivity",
                 "cpu_count":"$cpu_count"]
 
@@ -311,12 +312,11 @@ process Transform_Tractograms {
 }
 
 if (trks_t1s_empty.get()==0){
-  trks_for_combine.combine(atlas_for_combine).set{trk_atlases_for_decompose_connectivity}
+  trks_for_combine.combine(atlas_for_combine).groupTuple().map{[it[0], it[1], it[2][0], it[3][0], it[4][0], it[5][0], it[6][0]]}.set{trk_atlases_for_decompose_connectivity}
 }
 else{
   transformed_trks.combine(atlas_for_combine).set{trk_atlases_for_decompose_connectivity}
 }
-
 
 process Decompose_Connectivity {
     cpus 1
@@ -347,15 +347,16 @@ process Decompose_Connectivity {
     }
     """
     if [ `echo $trackings | wc -w` -gt 1 ]; then
-        scil_streamlines_math.py lazy_concatenate $trackings tracking_concat.trk --ignore_invalid
+        scil_tractogram_math.py lazy_concatenate $trackings tmp.trk -f
+        scil_remove_invalid_streamlines.py tmp.trk tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
     else
-        mv $trackings tracking_concat.trk
+        scil_remove_invalid_streamlines.py $trackings tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
     fi
-
+    
     scil_decompose_connectivity.py tracking_concat.trk $atlas "${sid}_${atlas_name}__decompose.h5" --no_remove_curv_dev \
         $no_pruning_arg $no_remove_loops_arg $no_remove_outliers_arg --min_length $params.min_length \
         --max_length $params.max_length --loop_max_angle $params.loop_max_angle \
-        --outlier_threshold $params.outlier_threshold
+        --outlier_threshold $params.outlier_threshold --processes $params.processes_decompose
     """
 }
 
@@ -379,6 +380,8 @@ process Compute_Connectivity_Lesion_without_similiarity {
     output:
     set sid, lesion_id, "*.npy", "Connectivity_w_lesion/*.npy" into matrices_for_connectivity_in_csv
     set sid, lesion_id, "$atlas_labels", "$atlas_list", "Connectivity_w_lesion/${lesion_id}_${sid}_lesion_sc.npy" into lesion_sc_for_visualisation
+    file "${lesion_id}_${sid}_atlas_sc_matrix.png"
+    file "${lesion_id}_${sid}_atlas_sc_hist.png"
 
     script:
     """
@@ -397,6 +400,11 @@ process Compute_Connectivity_Lesion_without_similiarity {
     rm rd_fixel.npy -f
     scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_edge_normalized.npy \
         --parcel_volume $atlas $atlas_list
+
+    # Visualise atlas/tractogram connectivity
+    scil_visualize_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_matrix.png --labels_list $atlas_list --name_axis \
+        --display_legend --lookup_table $atlas_labels --log --histogram ${lesion_id}_${sid}_atlas_sc_hist.png --nb_bins 50 --exclude_zeros --axis_text_size 5 5
+    
     scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_vol.npy ${lesion_id}_${sid}_atlas_sc_vol_normalized.npy \
         --parcel_volume $atlas $atlas_list
     """
@@ -435,7 +443,7 @@ process Connectivity_in_csv {
     """
 }
 
-process Visualize_Connectivity {
+process Visualize_Connectivity_Lesion {
     cpus 1
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity/Connectivity_w_lesion"}
 
@@ -454,3 +462,4 @@ process Visualize_Connectivity {
     done
     """
 }
+
