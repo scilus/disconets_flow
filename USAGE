@@ -12,12 +12,46 @@ If T1s are provided (lesions and/or tractograms) it will registered the lesion/t
 Disconets_flow will use a non-linear registration for the tractograms but you can use linear or
 non-linear registration for the lesions.
 
+Output structure
+----------------
+
+--output_dir= Root output folder
+              [root]
+              ├── S1 (One folder per subject)
+              │   │── Register_Lesions_T1s - T1 (subjects) in the atlas space
+              │   │── Transform_Lesions - Lesion in the atlas space
+              |   │── T01 (One folder per tractogram)
+              |   │    └── Compute_Connectivity -
+              │   │        │── Connectivity_w_lesion
+              |   |        │   │── *lesion_count(.csv/.npy)
+              |   |        │   │── *lesion_sc(.csv/.npy)
+              |   |        │   │── *lesion_vol(.csv/.npy)
+              |   |        │   │── *hist.png
+              |   |        │   └── *matrix.png
+              |   |        │
+              |   |        │── *lesion_count(.csv/.npy)
+              |   |        │── *lesion_sc(.csv/.npy)
+              |   |        │── *lesion_vol(.csv/.npy)
+              |   |        │── *hist.png
+              |   |        └── *matrix.png
+              |   |
+              │   └── T02
+              │        └── Compute_Connectivity -
+              |           │─ *
+              │── S*
+              │
+              ├── T01 (One folder per tractogram)
+              │   │── Compute_Connectivity - Connectivity matrice (specific to the atlas)
+              │   │── Register_Tractograms_T1s - T1 (tractograms) in the atlas space
+              │   └── Transform_Tractograms - Tractograms in the atlas space
+              │
+              └── T0*
+
 
 Please cite:
 Mrah S, Descoteaux M, Wager M, Boré A, Rheault F, Thirion B, Mandonnet E.
 Network-level prediction of set-shifting deterioration after lower-grade glioma resection.
 J Neurosurg. 2022 Mar 4:1-9. doi: 10.3171/2022.1.JNS212257. Epub ahead of print. PMID: 35245898.
-
 
 
 DESCRIPTION
