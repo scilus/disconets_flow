@@ -206,8 +206,8 @@ process Register_Lesions_T1s {
 
         antsBrainExtraction.sh -d 3 -a $t1 -e $params.template_t1/t1_template.nii.gz\
             -o bet/ -m $params.template_t1/t1_brain_probability_map.nii.gz -u 0
-        scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
-        scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
+        scil_volume_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
+        scil_volume_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
 
         ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" -t ${params.registration_strategy}
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
@@ -244,7 +244,7 @@ process Transform_Lesions {
     script:
     """
     antsApplyTransforms -d 3 -i $lesion -r $t1_ref -o ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz -t $mat -n NearestNeighbor
-    scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz ${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz --data_type int16
+    scil_volume_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz ${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz --data_type int16
     """
 }
 
@@ -273,8 +273,8 @@ process Register_Tractograms_T1s {
 
         antsBrainExtraction.sh -d 3 -a $t1 -e $params.template_t1/t1_template.nii.gz\
             -o bet/ -m $params.template_t1/t1_brain_probability_map.nii.gz -u 0
-        scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
-        scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
+        scil_volume_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
+        scil_volume_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
 
         ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${params.processes_bet_register_t1} -o "${sid}__output" -t s
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
@@ -310,7 +310,7 @@ process Transform_Tractograms {
 
     script:
     """
-    scil_apply_transform_to_tractogram.py ${trk} ${atlas} ${transfo} ${sid}_${atlas_name}_space.trk --remove_invalid --inverse --in_deformation ${inv_deformation}
+    scil_tractogram_apply_transform.py ${trk} ${atlas} ${transfo} ${sid}_${atlas_name}_space.trk --remove_invalid --inverse --in_deformation ${inv_deformation}
     """
 }
 
@@ -352,13 +352,13 @@ process Decompose_Connectivity {
     """
     if [ `echo $trackings | wc -w` -gt 1 ]; then
         scil_tractogram_math.py lazy_concatenate $trackings tmp.trk -f
-        scil_remove_invalid_streamlines.py tmp.trk tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
+        scil_tractogram_remove_invalid.py tmp.trk tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
     else
-        scil_remove_invalid_streamlines.py $trackings tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
+        scil_tractogram_remove_invalid.py $trackings tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
     fi
     
-    scil_decompose_connectivity.py tracking_concat.trk $atlas "${sid}_${atlas_name}__decompose.h5" --no_remove_curv_dev \
-        $no_pruning_arg $no_remove_loops_arg $no_remove_outliers_arg --min_length $params.min_length \
+    scil_tractogram_segment_connections_from_labels.py tracking_concat.trk $atlas "${sid}_${atlas_name}__decompose.h5" \
+        --no_remove_curv_dev $no_pruning_arg $no_remove_loops_arg $no_remove_outliers_arg --min_length $params.min_length \
         --max_length $params.max_length --loop_max_angle $params.loop_max_angle \
         --outlier_threshold $params.outlier_threshold --processes $params.processes_decompose
     """
@@ -391,7 +391,7 @@ process Compute_Connectivity_Lesion_without_similiarity {
     """
     mkdir Connectivity_w_lesion
 
-    scil_compute_connectivity.py $h5 $atlas --force_labels_list $atlas_list \
+    scil_connectivity_compute_matrices.py $h5 $atlas --force_labels_list $atlas_list \
         --volume ${lesion_id}_${sid}_atlas_vol.npy --streamline_count ${lesion_id}_${sid}_atlas_sc.npy \
         --length ${lesion_id}_${sid}_atlas_len.npy \
         --include_dps ./ --lesion_load $lesion Connectivity_w_lesion/ \
@@ -402,14 +402,14 @@ process Compute_Connectivity_Lesion_without_similiarity {
     mv Connectivity_w_lesion/lesion_count.npy Connectivity_w_lesion/${lesion_id}_${sid}_lesion_count.npy
 
     rm rd_fixel.npy -f
-    scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_edge_normalized.npy \
+    scil_connectivity_normalize.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_edge_normalized.npy \
         --parcel_volume $atlas $atlas_list
 
     # Visualise atlas/tractogram connectivity
-    scil_visualize_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_matrix.png --labels_list $atlas_list --name_axis \
+    scil_viz_connectivity.py ${lesion_id}_${sid}_atlas_sc.npy ${lesion_id}_${sid}_atlas_sc_matrix.png --labels_list $atlas_list --name_axis \
         --display_legend --lookup_table $atlas_labels --log --histogram ${lesion_id}_${sid}_atlas_sc_hist.png --nb_bins 50 --exclude_zeros --axis_text_size 5 5
     
-    scil_normalize_connectivity.py ${lesion_id}_${sid}_atlas_vol.npy ${lesion_id}_${sid}_atlas_sc_vol_normalized.npy \
+    scil_connectivity_normalize.py ${lesion_id}_${sid}_atlas_vol.npy ${lesion_id}_${sid}_atlas_sc_vol_normalized.npy \
         --parcel_volume $atlas $atlas_list
     """
 }
@@ -461,7 +461,7 @@ process Visualize_Connectivity_Lesion {
     String matrices_list = matrices.join(", ").replace(',', '')
     """
     for matrix in "$matrices_list"; do
-        scil_visualize_connectivity.py \$matrix \${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
+        scil_viz_connectivity.py \$matrix \${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
             --display_legend --lookup_table $atlas_labels --log --histogram \${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
     done
     """
