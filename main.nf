@@ -186,7 +186,7 @@ t1s_for_register.combine(atlas_for_lesion_registration).set{atlas_lesion_for_reg
 
 process Register_Lesions_T1s {
     cpus params.processes_bet_register_t1
-    publishDir = {"${params.output_dir}/lesions/${sid}/"}
+    publishDir = {"${params.output_dir}/lesion/${sid}/"}
 
     input:
     set sid, file(t1), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_lesion_for_registration
@@ -232,7 +232,7 @@ lesions_for_registration
 
 process Transform_Lesions {
     cpus 1
-    publishDir = {"${params.output_dir}/lesions/${sid}/"}
+    publishDir = {"${params.output_dir}/lesion/${sid}/"}
 
     input:
     set sid, file(lesion), atlas_name, file(mat), file(t1_ref) from lesion_mat_for_transformation
@@ -416,7 +416,7 @@ process Compute_Connectivity_Lesion_without_similiarity {
 
 process Connectivity_in_csv {
     cpus 1
-    publishDir = {"${params.output_dir}/lesions/$lesion_id/$sid/Compute_Connectivity"}
+    publishDir = {"${params.output_dir}/lesion/$lesion_id/$sid/Compute_Connectivity"}
 
     input:
     set sid, lesion_id, file(atlas_matrices), file(matrices_w_lesion) from matrices_for_connectivity_in_csv
@@ -449,7 +449,7 @@ process Connectivity_in_csv {
 
 process Visualize_Connectivity_Lesion {
     cpus 1
-    publishDir = {"${params.output_dir}/lesions/$lesion_id/$sid/Compute_Connectivity/Connectivity_w_lesion"}
+    publishDir = {"${params.output_dir}/lesion/$lesion_id/$sid/Compute_Connectivity/Connectivity_w_lesion"}
 
     input:
     set sid, lesion_id, file(atlas_labels), file(atlas_list), file(matrices) from lesion_sc_for_visualisation
