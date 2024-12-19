@@ -357,7 +357,7 @@ process Decompose_Connectivity {
         scil_tractogram_remove_invalid.py $trackings tracking_concat.trk --remove_single_point --remove_overlapping_points -f 
     fi
     
-    scil_tractogram_segment_connections_from_labels.py tracking_concat.trk $atlas "${sid}_${atlas_name}__decompose.h5" \
+    scil_tractogram_segment_bundles_for_connectivity.py tracking_concat.trk $atlas "${sid}_${atlas_name}__decompose.h5" \
         --no_remove_curv_dev $no_pruning_arg $no_remove_loops_arg $no_remove_outliers_arg --min_length $params.min_length \
         --max_length $params.max_length --loop_max_angle $params.loop_max_angle \
         --outlier_threshold $params.outlier_threshold --processes $params.processes_decompose
